@@ -21,6 +21,7 @@ mongoose
   .then(() => console.log('MongoDB Connected...'))
   .catch(err => console.log(err));
 
+console.log("added to git");// Use Routes
 // Use Routes
 app.use('/api', apiRoutes);
 
