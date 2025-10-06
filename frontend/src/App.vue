@@ -3,7 +3,7 @@
     <header class="bg-white shadow-sm">
       <div class="container mx-auto px-4 py-6">
         <h1 class="text-3xl font-bold text-gray-800">
-          Return & Exchange Portal
+          Return and Exchange Application
         </h1>
       </div>
     </header>
@@ -11,7 +11,7 @@
       <router-view />
     </main>
     <footer class="text-center py-4 text-gray-500 text-sm">
-      Powered by YourBrand
+      Powered by REEX
     </footer>
   </div>
 </template>
