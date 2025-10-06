@@ -3,10 +3,13 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
+// Set mongoose strictQuery to suppress deprecation warning
+mongoose.set('strictQuery', false);
+
 const apiRoutes = require('./routes/api');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001; // Changed to 3001 to match frontend config
 
 // Middleware
 app.use(cors());

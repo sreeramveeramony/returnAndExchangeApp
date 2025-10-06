@@ -1,51 +1,299 @@
 <template>
   <div class="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
     <h1 class="text-3xl font-bold text-gray-800 mb-6">Admin Dashboard</h1>
+    
     <div v-if="isLoading" class="text-center text-gray-500">
       <p>Loading requests...</p>
     </div>
     <div v-else-if="error" class="text-center text-red-500 bg-red-100 p-4 rounded-md">
       <p>Error loading requests: {{ error }}</p>
     </div>
-    <div v-else-if="requests.length === 0" class="text-center text-gray-500 bg-white p-6 rounded-lg shadow">
-      <p>No return or exchange requests found.</p>
-    </div>
-    <div v-else class="space-y-4">
-      <div v-for="request in requests" :key="request._id" class="bg-white p-5 rounded-lg shadow-md border border-gray-200">
-        <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4">
-          <div>
-            <h2 class="text-lg font-semibold text-gray-900">
-              Order #{{ request.originalOrder ? request.originalOrder.name : '[Unknown]' }} - <span class="font-normal">{{ request.type }} Request</span>
-            </h2>
-            <p class="text-sm text-gray-500">{{ new Date(request.createdAt).toLocaleString() }}</p>
-          </div>
-          <div :class="statusClass(request.status)" class="mt-2 sm:mt-0 text-sm font-medium py-1 px-3 rounded-full">
-            {{ request.status }}
-          </div>
+    <div v-else>
+      <!-- Filters -->
+      <div class="flex flex-wrap items-center justify-between mb-6 gap-4">
+        <div class="flex flex-wrap gap-2">
+          <button 
+            @click="setDateFilter('all')"
+            :class="['px-4 py-2 text-sm font-medium rounded-full', 
+                     dateFilter === 'all' 
+                       ? 'bg-blue-500 text-white' 
+                       : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50']"
+          >
+            All Time
+          </button>
+          <button 
+            @click="setDateFilter('today')"
+            :class="['px-4 py-2 text-sm font-medium rounded-full', 
+                     dateFilter === 'today' 
+                       ? 'bg-blue-500 text-white' 
+                       : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50']"
+          >
+            Today
+          </button>
+          <button 
+            @click="setDateFilter('yesterday')"
+            :class="['px-4 py-2 text-sm font-medium rounded-full', 
+                     dateFilter === 'yesterday' 
+                       ? 'bg-blue-500 text-white' 
+                       : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50']"
+          >
+            Yesterday
+          </button>
+          <button 
+            @click="setDateFilter('week')"
+            :class="['px-4 py-2 text-sm font-medium rounded-full', 
+                     dateFilter === 'week' 
+                       ? 'bg-blue-500 text-white' 
+                       : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50']"
+          >
+            Last 7 Days
+          </button>
+          <button 
+            @click="setDateFilter('month')"
+            :class="['px-4 py-2 text-sm font-medium rounded-full', 
+                     dateFilter === 'month' 
+                       ? 'bg-blue-500 text-white' 
+                       : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50']"
+          >
+            Last 30 Days
+          </button>
         </div>
         
-        <div class="border-t border-gray-200 pt-4">
-          <h3 class="font-semibold text-gray-700 mb-2">Items to Return:</h3>
-          <ul>
-            <li v-for="item in request.items" :key="item.lineItemId" class="flex justify-between items-center text-sm mb-1">
-              <span>{{ item.title }} (x{{ item.quantity }})</span>
-              <span class="text-gray-600">{{ formatCurrency(item.price) }}</span>
-            </li>
-          </ul>
+        <div class="text-sm text-gray-600">
+          Showing {{ filteredRequestsByDate.length }} of {{ requests.length }} requests
+        </div>
+      </div>
+      
+      <!-- Tabs -->
+      <div class="flex border-b border-gray-200 mb-6">
+        <button 
+          @click="activeTab = 'pending'"
+          :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
+                   activeTab === 'pending' 
+                     ? 'border-blue-500 text-blue-600' 
+                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
+        >
+          Requested
+          <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
+            {{ getRequestsByStatus('Pending').length }}
+          </span>
+        </button>
+        
+        <button 
+          @click="activeTab = 'approved'"
+          :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
+                   activeTab === 'approved' 
+                     ? 'border-blue-500 text-blue-600' 
+                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
+        >
+          Approved
+          <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
+            {{ getRequestsByStatus('Approved').length }}
+          </span>
+        </button>
+        
+        <button 
+          @click="activeTab = 'refunded'"
+          :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
+                   activeTab === 'refunded' 
+                     ? 'border-blue-500 text-blue-600' 
+                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
+        >
+          Refunded
+          <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
+            {{ getRequestsByStatus('Refunded').length }}
+          </span>
+        </button>
+        
+        <button 
+          @click="activeTab = 'rejected'"
+          :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
+                   activeTab === 'rejected' 
+                     ? 'border-blue-500 text-blue-600' 
+                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
+        >
+          Rejected
+          <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
+            {{ getRequestsByStatus('Rejected').length }}
+          </span>
+        </button>
+      </div>
 
-          <div v-if="request.type === 'Exchange' && request.exchangeItem" class="mt-3 border-t border-gray-100 pt-3">
-             <h3 class="font-semibold text-gray-700 mb-2">Requested Exchange Item:</h3>
-             <p class="text-sm">{{ request.exchangeItem.title }} (x{{ request.exchangeItem.quantity }})</p>
+      <!-- Requested/Pending Tab Content -->
+      <div v-show="activeTab === 'pending'">
+        <div v-if="getRequestsByStatus('Pending').length === 0" class="text-center text-gray-500 bg-white p-6 rounded-lg shadow">
+          <p>No pending requests.</p>
+        </div>
+        <div v-else class="space-y-4">
+          <div v-for="request in getRequestsByStatus('Pending')" :key="request._id" class="bg-white p-5 rounded-lg shadow-md border border-gray-200">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4">
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900">
+                  Order #{{ request.originalOrder ? request.originalOrder.name : '[Unknown]' }} - <span class="font-normal">{{ request.type }} Request</span>
+                </h2>
+                <p class="text-sm text-gray-500">{{ new Date(request.createdAt).toLocaleString() }}</p>
+              </div>
+              <div :class="statusClass(request.status)" class="mt-2 sm:mt-0 text-sm font-medium py-1 px-3 rounded-full">
+                {{ request.status }}
+              </div>
+            </div>
+            
+            <div class="border-t border-gray-200 pt-4">
+              <h3 class="font-semibold text-gray-700 mb-2">Items to Return:</h3>
+              <ul>
+                <li v-for="item in request.items" :key="item.lineItemId" class="flex justify-between items-center text-sm mb-1">
+                  <span>{{ item.title }} (x{{ item.quantity }})</span>
+                  <span class="text-gray-600">{{ formatCurrency(item.price) }}</span>
+                </li>
+              </ul>
+
+              <div v-if="request.type === 'Exchange' && request.exchangeItem" class="mt-3 border-t border-gray-100 pt-3">
+                 <h3 class="font-semibold text-gray-700 mb-2">Requested Exchange Item:</h3>
+                 <p class="text-sm">{{ request.exchangeItem.title }} (x{{ request.exchangeItem.quantity }})</p>
+              </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-4 pt-4 border-t border-gray-200">
+              <button @click="updateRequestStatus(request._id, 'Rejected')" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md text-sm transition duration-150">
+                Reject
+              </button>
+              <button @click="updateRequestStatus(request._id, 'Approved')" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md text-sm transition duration-150">
+                Approve
+              </button>
+            </div>
           </div>
         </div>
-        
-        <div v-if="request.status === 'Pending'" class="flex justify-end space-x-3 mt-4 pt-4 border-t border-gray-200">
-          <button @click="updateRequestStatus(request._id, 'Rejected')" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md text-sm transition duration-150">
-            Reject
-          </button>
-          <button @click="updateRequestStatus(request._id, 'Approved')" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md text-sm transition duration-150">
-            Approve
-          </button>
+      </div>
+
+      <!-- Approved Tab Content -->
+      <div v-show="activeTab === 'approved'">
+        <div v-if="getRequestsByStatus('Approved').length === 0" class="text-center text-gray-500 bg-white p-6 rounded-lg shadow">
+          <p>No approved requests.</p>
+        </div>
+        <div v-else class="space-y-4">
+          <div v-for="request in getRequestsByStatus('Approved')" :key="request._id" class="bg-white p-5 rounded-lg shadow-md border border-gray-200">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4">
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900">
+                  Order #{{ request.originalOrder ? request.originalOrder.name : '[Unknown]' }} - <span class="font-normal">{{ request.type }} Request</span>
+                </h2>
+                <p class="text-sm text-gray-500">{{ new Date(request.createdAt).toLocaleString() }}</p>
+              </div>
+              <div :class="statusClass(request.status)" class="mt-2 sm:mt-0 text-sm font-medium py-1 px-3 rounded-full">
+                {{ request.status }}
+              </div>
+            </div>
+            
+            <div class="border-t border-gray-200 pt-4">
+              <h3 class="font-semibold text-gray-700 mb-2">Items to Return:</h3>
+              <ul>
+                <li v-for="item in request.items" :key="item.lineItemId" class="flex justify-between items-center text-sm mb-1">
+                  <span>{{ item.title }} (x{{ item.quantity }})</span>
+                  <span class="text-gray-600">{{ formatCurrency(item.price) }}</span>
+                </li>
+              </ul>
+
+              <div v-if="request.type === 'Exchange' && request.exchangeItem" class="mt-3 border-t border-gray-100 pt-3">
+                 <h3 class="font-semibold text-gray-700 mb-2">Requested Exchange Item:</h3>
+                 <p class="text-sm">{{ request.exchangeItem.title }} (x{{ request.exchangeItem.quantity }})</p>
+              </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-4 pt-4 border-t border-gray-200">
+              <button @click="updateRequestStatus(request._id, 'Refunded')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md text-sm transition duration-150">
+                Mark as Refunded
+              </button>
+              <button @click="updateRequestStatus(request._id, 'Rejected')" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md text-sm transition duration-150">
+                Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Refunded Tab Content -->
+      <div v-show="activeTab === 'refunded'">
+        <div v-if="getRequestsByStatus('Refunded').length === 0" class="text-center text-gray-500 bg-white p-6 rounded-lg shadow">
+          <p>No refunded requests.</p>
+        </div>
+        <div v-else class="space-y-4">
+          <div v-for="request in getRequestsByStatus('Refunded')" :key="request._id" class="bg-white p-5 rounded-lg shadow-md border border-gray-200">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4">
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900">
+                  Order #{{ request.originalOrder ? request.originalOrder.name : '[Unknown]' }} - <span class="font-normal">{{ request.type }} Request</span>
+                </h2>
+                <p class="text-sm text-gray-500">{{ new Date(request.createdAt).toLocaleString() }}</p>
+              </div>
+              <div :class="statusClass(request.status)" class="mt-2 sm:mt-0 text-sm font-medium py-1 px-3 rounded-full">
+                {{ request.status }}
+              </div>
+            </div>
+            
+            <div class="border-t border-gray-200 pt-4">
+              <h3 class="font-semibold text-gray-700 mb-2">Items to Return:</h3>
+              <ul>
+                <li v-for="item in request.items" :key="item.lineItemId" class="flex justify-between items-center text-sm mb-1">
+                  <span>{{ item.title }} (x{{ item.quantity }})</span>
+                  <span class="text-gray-600">{{ formatCurrency(item.price) }}</span>
+                </li>
+              </ul>
+
+              <div v-if="request.type === 'Exchange' && request.exchangeItem" class="mt-3 border-t border-gray-100 pt-3">
+                 <h3 class="font-semibold text-gray-700 mb-2">Requested Exchange Item:</h3>
+                 <p class="text-sm">{{ request.exchangeItem.title }} (x{{ request.exchangeItem.quantity }})</p>
+              </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-4 pt-4 border-t border-gray-200">
+              <button @click="updateRequestStatus(request._id, 'Completed')" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-md text-sm transition duration-150">
+                Mark as Completed
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rejected Tab Content -->
+      <div v-show="activeTab === 'rejected'">
+        <div v-if="getRequestsByStatus('Rejected').length === 0" class="text-center text-gray-500 bg-white p-6 rounded-lg shadow">
+          <p>No rejected requests.</p>
+        </div>
+        <div v-else class="space-y-4">
+          <div v-for="request in getRequestsByStatus('Rejected')" :key="request._id" class="bg-white p-5 rounded-lg shadow-md border border-gray-200">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4">
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900">
+                  Order #{{ request.originalOrder ? request.originalOrder.name : '[Unknown]' }} - <span class="font-normal">{{ request.type }} Request</span>
+                </h2>
+                <p class="text-sm text-gray-500">{{ new Date(request.createdAt).toLocaleString() }}</p>
+              </div>
+              <div :class="statusClass(request.status)" class="mt-2 sm:mt-0 text-sm font-medium py-1 px-3 rounded-full">
+                {{ request.status }}
+              </div>
+            </div>
+            
+            <div class="border-t border-gray-200 pt-4">
+              <h3 class="font-semibold text-gray-700 mb-2">Items to Return:</h3>
+              <ul>
+                <li v-for="item in request.items" :key="item.lineItemId" class="flex justify-between items-center text-sm mb-1">
+                  <span>{{ item.title }} (x{{ item.quantity }})</span>
+                  <span class="text-gray-600">{{ formatCurrency(item.price) }}</span>
+                </li>
+              </ul>
+
+              <div v-if="request.type === 'Exchange' && request.exchangeItem" class="mt-3 border-t border-gray-100 pt-3">
+                 <h3 class="font-semibold text-gray-700 mb-2">Requested Exchange Item:</h3>
+                 <p class="text-sm">{{ request.exchangeItem.title }} (x{{ request.exchangeItem.quantity }})</p>
+              </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-4 pt-4 border-t border-gray-200">
+              <button @click="updateRequestStatus(request._id, 'Approved')" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md text-sm transition duration-150">
+                Approve
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -62,10 +310,69 @@ export default {
       requests: [],
       isLoading: true,
       error: null,
+      activeTab: 'pending', // Default to showing pending requests
+      dateFilter: 'all', // Default to showing all requests
     };
   },
   async created() {
     await this.fetchRequests();
+  },
+  computed: {
+    // Filter requests by date
+    filteredRequestsByDate() {
+      if (this.dateFilter === 'all') {
+        return this.requests;
+      }
+
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const weekAgo = new Date(today);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const monthAgo = new Date(today);
+      monthAgo.setDate(monthAgo.getDate() - 30);
+
+      return this.requests.filter(request => {
+        const requestDate = new Date(request.createdAt);
+        const requestDateOnly = new Date(requestDate.getFullYear(), requestDate.getMonth(), requestDate.getDate());
+
+        switch (this.dateFilter) {
+          case 'today':
+            return requestDateOnly.getTime() === today.getTime();
+          case 'yesterday':
+            return requestDateOnly.getTime() === yesterday.getTime();
+          case 'week':
+            return requestDateOnly >= weekAgo;
+          case 'month':
+            return requestDateOnly >= monthAgo;
+          default:
+            return true;
+        }
+      });
+    },
+    
+    // Group filtered requests by status
+    requestsByStatus() {
+      const grouped = {
+        Pending: [],
+        Approved: [],
+        Refunded: [],
+        Rejected: []
+      };
+      this.filteredRequestsByDate.forEach(request => {
+        if (grouped.hasOwnProperty(request.status)) {
+          grouped[request.status].push(request);
+        } else {
+          // Handle any other status values if they exist
+          if (!grouped[request.status]) {
+            grouped[request.status] = [];
+          }
+          grouped[request.status].push(request);
+        }
+      });
+      return grouped;
+    }
   },
   methods: {
     async fetchRequests() {
@@ -80,6 +387,11 @@ export default {
       } finally {
         this.isLoading = false;
       }
+    },
+    
+    // Set the date filter
+    setDateFilter(filter) {
+      this.dateFilter = filter;
     },
     async updateRequestStatus(id, status) {
       try {
@@ -96,6 +408,10 @@ export default {
         console.error('Update Request Error:', err);
       }
     },
+    // Get requests by status
+    getRequestsByStatus(status) {
+      return this.requestsByStatus[status] || [];
+    },
     formatCurrency(value) {
         if (!value) return '$0.00';
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
@@ -106,8 +422,12 @@ export default {
           return 'bg-yellow-100 text-yellow-800';
         case 'Approved':
           return 'bg-green-100 text-green-800';
+        case 'Refunded':
+          return 'bg-blue-100 text-blue-800';
         case 'Rejected':
           return 'bg-red-100 text-red-800';
+        case 'Completed':
+          return 'bg-purple-100 text-purple-800';
         default:
           return 'bg-gray-100 text-gray-800';
       }

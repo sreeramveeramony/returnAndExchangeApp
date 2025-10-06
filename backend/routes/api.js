@@ -145,7 +145,8 @@ router.patch('/requests/:id', async (req, res) => {
 
     const VALID_NEXT = {
       Pending: new Set(['Approved', 'Rejected']),
-      Approved: new Set(['Completed', 'Cancelled']),
+      Approved: new Set(['Refunded', 'Completed', 'Cancelled']),
+      Refunded: new Set(['Completed', 'Cancelled']),
       Rejected: new Set([]),
       Completed: new Set([]),
       Cancelled: new Set([]),
