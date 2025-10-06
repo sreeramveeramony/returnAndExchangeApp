@@ -1,186 +1,196 @@
 <template>
-  <div class="flex h-screen bg-gray-50">
+  <div class="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
     <!-- Sidebar Navigation -->
-    <div class="w-64 bg-white shadow-md p-4 flex flex-col">
-      <h1 class="text-2xl font-bold text-gray-800 mb-6">Admin Dashboard</h1>
+    <div class="w-64 bg-white shadow-xl border-r border-gray-200 p-5 flex flex-col">
+      <div class="mb-8">
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          Return Exchange
+        </h1>
+        <p class="text-xs text-gray-500 mt-1">Admin Dashboard</p>
+      </div>
       
       <!-- Return/Exchange Navigation -->
       <nav class="flex-1">
-        <ul class="space-y-2">
+        <ul class="space-y-1">
           <li>
             <button 
               @click="setRequestType('all')" 
-              :class="['w-full text-left px-4 py-3 text-sm font-medium rounded-lg transition duration-150', 
+              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
                        requestType === 'all' 
-                         ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-500' 
-                         : 'text-gray-700 hover:bg-gray-100']"
+                         ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-l-4 border-blue-500 shadow-sm' 
+                         : 'text-gray-700 hover:bg-gray-50 hover:translate-x-1']"
             >
-              <div class="flex justify-between items-center">
-                <span>All Requests</span>
-                <span class="bg-gray-200 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
+                <span class="font-medium">All Requests</span>
+                <span class="bg-blue-100 text-blue-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
                   {{ allRequests.length }}
                 </span>
-              </div>
             </button>
           </li>
-          <li>
+          <li class="mt-2">
             <button 
               @click="setRequestType('Return')" 
-              :class="['w-full text-left px-4 py-3 text-sm font-medium rounded-lg transition duration-150', 
+              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
                        requestType === 'Return' 
-                         ? 'bg-green-100 text-green-700 border-l-4 border-green-500' 
-                         : 'text-gray-700 hover:bg-gray-100']"
+                         ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-l-4 border-green-500 shadow-sm' 
+                         : 'text-gray-700 hover:bg-gray-50 hover:translate-x-1']"
             >
-              <div class="flex justify-between items-center">
-                <span>Returns</span>
-                <span class="bg-green-200 text-green-800 text-xs font-medium py-1 px-2 rounded-full">
+                <span class="font-medium">Returns</span>
+                <span class="bg-green-100 text-green-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
                   {{ getRequestsByType('Return').length }}
                 </span>
-              </div>
             </button>
           </li>
-          <li>
+          <li class="mt-2">
             <button 
               @click="setRequestType('Exchange')" 
-              :class="['w-full text-left px-4 py-3 text-sm font-medium rounded-lg transition duration-150', 
+              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
                        requestType === 'Exchange' 
-                         ? 'bg-purple-100 text-purple-700 border-l-4 border-purple-500' 
-                         : 'text-gray-700 hover:bg-gray-100']"
+                         ? 'bg-gradient-to-r from-purple-50 to-violet-50 text-purple-700 border-l-4 border-purple-500 shadow-sm' 
+                         : 'text-gray-700 hover:bg-gray-50 hover:translate-x-1']"
             >
-              <div class="flex justify-between items-center">
-                <span>Exchanges</span>
-                <span class="bg-purple-200 text-purple-800 text-xs font-medium py-1 px-2 rounded-full">
+                <span class="font-medium">Exchanges</span>
+                <span class="bg-purple-100 text-purple-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
                   {{ getRequestsByType('Exchange').length }}
                 </span>
-              </div>
             </button>
           </li>
         </ul>
       </nav>
       
       <!-- Navigation Section Only -->
-      <div class="mt-6">
-        <h3 class="text-sm font-medium text-gray-900 mb-3">Navigation</h3>
+      <div class="mt-auto pt-6 border-t border-gray-200">
+        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+          <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span class="text-xs text-gray-600">Live Status</span>
+        </div>
       </div>
     </div>
     
     <!-- Main Content -->
-    <div class="flex-1 p-6 overflow-y-auto">
-      <div v-if="isLoading" class="text-center text-gray-500">
-        <p>Loading requests...</p>
+    <div class="flex-1 p-8 overflow-y-auto">
+      <div v-if="isLoading" class="flex flex-col items-center justify-center h-64">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+        <p class="text-gray-600">Loading requests...</p>
       </div>
-      <div v-else-if="error" class="text-center text-red-500 bg-red-100 p-4 rounded-md">
-        <p>Error loading requests: {{ error }}</p>
+      <div v-else-if="error" class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mx-4 my-6">
+        <p class="text-red-700">{{ error }}</p>
       </div>
       <div v-else>
-        <div class="mb-6 flex justify-between items-center">
-          <h2 class="text-xl font-bold text-gray-800">
-            {{ requestType === 'all' ? 'All Requests' : requestType + ' Requests' }}
-            <span class="text-sm font-normal text-gray-600 ml-2">
-              (Showing {{ filteredRequestsByDate.length }} of {{ allRequests.length }} requests{{ dateFilter !== 'all' ? ' - ' + dateFilter.charAt(0).toUpperCase() + dateFilter.slice(1) : '' }})
-            </span>
-          </h2>
+        <div class="mb-8">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+            <h2 class="text-2xl font-bold text-gray-900">
+              {{ requestType === 'all' ? 'All Requests' : requestType + ' Requests' }}
+            </h2>
+            <div class="text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-full">
+              <span class="font-medium">{{ filteredRequestsByDate.length }}</span> of <span class="font-medium">{{ allRequests.length }}</span> requests
+              <span v-if="dateFilter !== 'all'" class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
+                {{ dateFilter.charAt(0).toUpperCase() + dateFilter.slice(1) }}
+              </span>
+            </div>
+          </div>
+          <p class="text-gray-600 text-sm">Manage and process return and exchange requests</p>
         </div>
         
         <!-- Tabs -->
-        <div class="flex border-b border-gray-200 mb-6">
+        <div class="flex flex-wrap border-b border-gray-200 mb-6 pb-0.5">
           <button 
             @click="activeTab = 'pending'"
-            :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
+            :class="['px-5 py-3 text-sm font-semibold rounded-t-lg border-b-0 mr-1 mb-0 transition-all duration-200', 
                      activeTab === 'pending' 
-                       ? 'border-blue-500 text-blue-600' 
-                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
+                       ? 'bg-blue-100 text-blue-700 border border-gray-300 border-b-0 border-t-2 border-t-blue-500 -mb-0.5' 
+                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50']"
           >
             Requested
-            <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
+            <span class="ml-2 bg-blue-500 text-white text-xs font-medium py-0.5 px-2 rounded-full">
               {{ getRequestsByStatus('Pending').length }}
             </span>
           </button>
           
           <button 
             @click="activeTab = 'approved'"
-            :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
+            :class="['px-5 py-3 text-sm font-semibold rounded-t-lg border-b-0 mr-1 mb-0 transition-all duration-200', 
                      activeTab === 'approved' 
-                       ? 'border-blue-500 text-blue-600' 
-                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
+                       ? 'bg-green-100 text-green-700 border border-gray-300 border-b-0 border-t-2 border-t-green-500 -mb-0.5' 
+                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50']"
           >
             Approved
-            <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
+            <span class="ml-2 bg-green-500 text-white text-xs font-medium py-0.5 px-2 rounded-full">
               {{ getRequestsByStatus('Approved').length }}
             </span>
           </button>
           
           <button 
             @click="activeTab = 'refunded'"
-            :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
+            :class="['px-5 py-3 text-sm font-semibold rounded-t-lg border-b-0 mr-1 mb-0 transition-all duration-200', 
                      activeTab === 'refunded' 
-                       ? 'border-blue-500 text-blue-600' 
-                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
+                       ? 'bg-blue-500 text-white border border-blue-500 border-b-0 border-t-2 border-t-blue-600 -mb-0.5' 
+                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50']"
           >
             Refunded
-            <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
+            <span class="ml-2 bg-blue-600 text-white text-xs font-medium py-0.5 px-2 rounded-full">
               {{ getRequestsByStatus('Refunded').length }}
             </span>
           </button>
           
           <button 
             @click="activeTab = 'rejected'"
-            :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
+            :class="['px-5 py-3 text-sm font-semibold rounded-t-lg border-b-0 mr-1 mb-0 transition-all duration-200', 
                      activeTab === 'rejected' 
-                       ? 'border-blue-500 text-blue-600' 
-                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
+                       ? 'bg-red-100 text-red-700 border border-gray-300 border-b-0 border-t-2 border-t-red-500 -mb-0.5' 
+                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50']"
           >
             Rejected
-            <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
+            <span class="ml-2 bg-red-500 text-white text-xs font-medium py-0.5 px-2 rounded-full">
               {{ getRequestsByStatus('Rejected').length }}
             </span>
           </button>
         </div>
 
         <!-- Date Filters -->
-        <div class="flex flex-wrap gap-2 mt-4">
+        <div class="flex flex-wrap gap-2 mb-6 p-3 bg-white rounded-xl border border-gray-200 shadow-sm">
+          <span class="text-sm font-medium text-gray-700 self-center mr-3">Filter by:</span>
           <button 
             @click="setDateFilter('all')"
-            :class="['px-3 py-1.5 text-xs font-medium rounded-full', 
+            :class="['px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200', 
                      dateFilter === 'all' 
-                       ? 'bg-blue-500 text-white' 
-                       : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50']"
+                       ? 'bg-blue-500 text-white shadow-md' 
+                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200']"
           >
             All Time
           </button>
           <button 
             @click="setDateFilter('today')"
-            :class="['px-3 py-1.5 text-xs font-medium rounded-full', 
+            :class="['px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200', 
                      dateFilter === 'today' 
-                       ? 'bg-blue-500 text-white' 
-                       : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50']"
+                       ? 'bg-blue-500 text-white shadow-md' 
+                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200']"
           >
             Today
           </button>
           <button 
             @click="setDateFilter('yesterday')"
-            :class="['px-3 py-1.5 text-xs font-medium rounded-full', 
+            :class="['px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200', 
                      dateFilter === 'yesterday' 
-                       ? 'bg-blue-500 text-white' 
-                       : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50']"
+                       ? 'bg-blue-500 text-white shadow-md' 
+                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200']"
           >
             Yesterday
           </button>
           <button 
             @click="setDateFilter('week')"
-            :class="['px-3 py-1.5 text-xs font-medium rounded-full', 
+            :class="['px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200', 
                      dateFilter === 'week' 
-                       ? 'bg-blue-500 text-white' 
-                       : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50']"
+                       ? 'bg-blue-500 text-white shadow-md' 
+                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200']"
           >
             Last 7 Days
           </button>
           <button 
             @click="setDateFilter('month')"
-            :class="['px-3 py-1.5 text-xs font-medium rounded-full', 
+            :class="['px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200', 
                      dateFilter === 'month' 
-                       ? 'bg-blue-500 text-white' 
-                       : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50']"
+                       ? 'bg-blue-500 text-white shadow-md' 
+                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200']"
           >
             Last 30 Days
           </button>
@@ -504,8 +514,8 @@ export default {
       return (this.requestsByStatus && this.requestsByStatus[status]) || [];
     },
     formatCurrency(value) {
-        if (!value) return '$0.00';
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+        if (!value) return '₹0.00';
+        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(value);
     },
     statusClass(status) {
       switch (status) {
@@ -522,8 +532,19 @@ export default {
         default:
           return 'bg-gray-100 text-gray-800';
       }
+    },
+    typeClass(type) {
+      switch (type) {
+        case 'Return':
+          return 'bg-blue-100 text-blue-800';
+        case 'Exchange':
+          return 'bg-purple-100 text-purple-800';
+        default:
+          return 'bg-gray-100 text-gray-800';
+      }
     }
   },
 };
 </script>
+
 
