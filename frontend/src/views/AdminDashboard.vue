@@ -1,20 +1,147 @@
 <template>
-  <div class="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">Admin Dashboard</h1>
+  <div class="flex h-screen bg-gray-50">
+    <!-- Sidebar Navigation -->
+    <div class="w-64 bg-white shadow-md p-4 flex flex-col">
+      <h1 class="text-2xl font-bold text-gray-800 mb-6">Admin Dashboard</h1>
+      
+      <!-- Return/Exchange Navigation -->
+      <nav class="flex-1">
+        <ul class="space-y-2">
+          <li>
+            <button 
+              @click="setRequestType('all')" 
+              :class="['w-full text-left px-4 py-3 text-sm font-medium rounded-lg transition duration-150', 
+                       requestType === 'all' 
+                         ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-500' 
+                         : 'text-gray-700 hover:bg-gray-100']"
+            >
+              <div class="flex justify-between items-center">
+                <span>All Requests</span>
+                <span class="bg-gray-200 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
+                  {{ allRequests.length }}
+                </span>
+              </div>
+            </button>
+          </li>
+          <li>
+            <button 
+              @click="setRequestType('Return')" 
+              :class="['w-full text-left px-4 py-3 text-sm font-medium rounded-lg transition duration-150', 
+                       requestType === 'Return' 
+                         ? 'bg-green-100 text-green-700 border-l-4 border-green-500' 
+                         : 'text-gray-700 hover:bg-gray-100']"
+            >
+              <div class="flex justify-between items-center">
+                <span>Returns</span>
+                <span class="bg-green-200 text-green-800 text-xs font-medium py-1 px-2 rounded-full">
+                  {{ getRequestsByType('Return').length }}
+                </span>
+              </div>
+            </button>
+          </li>
+          <li>
+            <button 
+              @click="setRequestType('Exchange')" 
+              :class="['w-full text-left px-4 py-3 text-sm font-medium rounded-lg transition duration-150', 
+                       requestType === 'Exchange' 
+                         ? 'bg-purple-100 text-purple-700 border-l-4 border-purple-500' 
+                         : 'text-gray-700 hover:bg-gray-100']"
+            >
+              <div class="flex justify-between items-center">
+                <span>Exchanges</span>
+                <span class="bg-purple-200 text-purple-800 text-xs font-medium py-1 px-2 rounded-full">
+                  {{ getRequestsByType('Exchange').length }}
+                </span>
+              </div>
+            </button>
+          </li>
+        </ul>
+      </nav>
+      
+      <!-- Navigation Section Only -->
+      <div class="mt-6">
+        <h3 class="text-sm font-medium text-gray-900 mb-3">Navigation</h3>
+      </div>
+    </div>
     
-    <div v-if="isLoading" class="text-center text-gray-500">
-      <p>Loading requests...</p>
-    </div>
-    <div v-else-if="error" class="text-center text-red-500 bg-red-100 p-4 rounded-md">
-      <p>Error loading requests: {{ error }}</p>
-    </div>
-    <div v-else>
-      <!-- Filters -->
-      <div class="flex flex-wrap items-center justify-between mb-6 gap-4">
-        <div class="flex flex-wrap gap-2">
+    <!-- Main Content -->
+    <div class="flex-1 p-6 overflow-y-auto">
+      <div v-if="isLoading" class="text-center text-gray-500">
+        <p>Loading requests...</p>
+      </div>
+      <div v-else-if="error" class="text-center text-red-500 bg-red-100 p-4 rounded-md">
+        <p>Error loading requests: {{ error }}</p>
+      </div>
+      <div v-else>
+        <div class="mb-6 flex justify-between items-center">
+          <h2 class="text-xl font-bold text-gray-800">
+            {{ requestType === 'all' ? 'All Requests' : requestType + ' Requests' }}
+            <span class="text-sm font-normal text-gray-600 ml-2">
+              (Showing {{ filteredRequestsByDate.length }} of {{ allRequests.length }} requests{{ dateFilter !== 'all' ? ' - ' + dateFilter.charAt(0).toUpperCase() + dateFilter.slice(1) : '' }})
+            </span>
+          </h2>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-200 mb-6">
+          <button 
+            @click="activeTab = 'pending'"
+            :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
+                     activeTab === 'pending' 
+                       ? 'border-blue-500 text-blue-600' 
+                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
+          >
+            Requested
+            <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
+              {{ getRequestsByStatus('Pending').length }}
+            </span>
+          </button>
+          
+          <button 
+            @click="activeTab = 'approved'"
+            :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
+                     activeTab === 'approved' 
+                       ? 'border-blue-500 text-blue-600' 
+                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
+          >
+            Approved
+            <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
+              {{ getRequestsByStatus('Approved').length }}
+            </span>
+          </button>
+          
+          <button 
+            @click="activeTab = 'refunded'"
+            :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
+                     activeTab === 'refunded' 
+                       ? 'border-blue-500 text-blue-600' 
+                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
+          >
+            Refunded
+            <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
+              {{ getRequestsByStatus('Refunded').length }}
+            </span>
+          </button>
+          
+          <button 
+            @click="activeTab = 'rejected'"
+            :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
+                     activeTab === 'rejected' 
+                       ? 'border-blue-500 text-blue-600' 
+                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
+          >
+            Rejected
+            <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
+              {{ getRequestsByStatus('Rejected').length }}
+            </span>
+          </button>
+        </div>
+
+        <!-- Date Filters -->
+        <div class="flex flex-wrap gap-2 mt-4">
           <button 
             @click="setDateFilter('all')"
-            :class="['px-4 py-2 text-sm font-medium rounded-full', 
+            :class="['px-3 py-1.5 text-xs font-medium rounded-full', 
                      dateFilter === 'all' 
                        ? 'bg-blue-500 text-white' 
                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50']"
@@ -23,7 +150,7 @@
           </button>
           <button 
             @click="setDateFilter('today')"
-            :class="['px-4 py-2 text-sm font-medium rounded-full', 
+            :class="['px-3 py-1.5 text-xs font-medium rounded-full', 
                      dateFilter === 'today' 
                        ? 'bg-blue-500 text-white' 
                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50']"
@@ -32,7 +159,7 @@
           </button>
           <button 
             @click="setDateFilter('yesterday')"
-            :class="['px-4 py-2 text-sm font-medium rounded-full', 
+            :class="['px-3 py-1.5 text-xs font-medium rounded-full', 
                      dateFilter === 'yesterday' 
                        ? 'bg-blue-500 text-white' 
                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50']"
@@ -41,7 +168,7 @@
           </button>
           <button 
             @click="setDateFilter('week')"
-            :class="['px-4 py-2 text-sm font-medium rounded-full', 
+            :class="['px-3 py-1.5 text-xs font-medium rounded-full', 
                      dateFilter === 'week' 
                        ? 'bg-blue-500 text-white' 
                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50']"
@@ -50,7 +177,7 @@
           </button>
           <button 
             @click="setDateFilter('month')"
-            :class="['px-4 py-2 text-sm font-medium rounded-full', 
+            :class="['px-3 py-1.5 text-xs font-medium rounded-full', 
                      dateFilter === 'month' 
                        ? 'bg-blue-500 text-white' 
                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50']"
@@ -58,66 +185,6 @@
             Last 30 Days
           </button>
         </div>
-        
-        <div class="text-sm text-gray-600">
-          Showing {{ filteredRequestsByDate.length }} of {{ requests.length }} requests
-        </div>
-      </div>
-      
-      <!-- Tabs -->
-      <div class="flex border-b border-gray-200 mb-6">
-        <button 
-          @click="activeTab = 'pending'"
-          :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
-                   activeTab === 'pending' 
-                     ? 'border-blue-500 text-blue-600' 
-                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
-        >
-          Requested
-          <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
-            {{ getRequestsByStatus('Pending').length }}
-          </span>
-        </button>
-        
-        <button 
-          @click="activeTab = 'approved'"
-          :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
-                   activeTab === 'approved' 
-                     ? 'border-blue-500 text-blue-600' 
-                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
-        >
-          Approved
-          <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
-            {{ getRequestsByStatus('Approved').length }}
-          </span>
-        </button>
-        
-        <button 
-          @click="activeTab = 'refunded'"
-          :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
-                   activeTab === 'refunded' 
-                     ? 'border-blue-500 text-blue-600' 
-                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
-        >
-          Refunded
-          <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
-            {{ getRequestsByStatus('Refunded').length }}
-          </span>
-        </button>
-        
-        <button 
-          @click="activeTab = 'rejected'"
-          :class="['py-3 px-6 text-center font-medium text-sm border-b-2 -mb-px', 
-                   activeTab === 'rejected' 
-                     ? 'border-blue-500 text-blue-600' 
-                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']"
-        >
-          Rejected
-          <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2 rounded-full">
-            {{ getRequestsByStatus('Rejected').length }}
-          </span>
-        </button>
-      </div>
 
       <!-- Requested/Pending Tab Content -->
       <div v-show="activeTab === 'pending'">
@@ -298,6 +365,7 @@
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
@@ -312,44 +380,53 @@ export default {
       error: null,
       activeTab: 'pending', // Default to showing pending requests
       dateFilter: 'all', // Default to showing all requests
+      requestType: 'all', // Default to showing all request types
     };
   },
   async created() {
     await this.fetchRequests();
   },
   computed: {
-    // Filter requests by date
+    // Filter requests by date and type
     filteredRequestsByDate() {
-      if (this.dateFilter === 'all') {
-        return this.requests;
+      let filteredRequests = this.requests;
+      
+      // First filter by type (all, return, exchange)
+      if (this.requestType !== 'all') {
+        filteredRequests = filteredRequests.filter(request => request.type && request.type === this.requestType);
       }
+      
+      // Then filter by date
+      if (this.dateFilter !== 'all') {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        const monthAgo = new Date(today);
+        monthAgo.setDate(monthAgo.getDate() - 30);
 
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const weekAgo = new Date(today);
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      const monthAgo = new Date(today);
-      monthAgo.setDate(monthAgo.getDate() - 30);
+        filteredRequests = filteredRequests.filter(request => {
+          const requestDate = new Date(request.createdAt);
+          const requestDateOnly = new Date(requestDate.getFullYear(), requestDate.getMonth(), requestDate.getDate());
 
-      return this.requests.filter(request => {
-        const requestDate = new Date(request.createdAt);
-        const requestDateOnly = new Date(requestDate.getFullYear(), requestDate.getMonth(), requestDate.getDate());
-
-        switch (this.dateFilter) {
-          case 'today':
-            return requestDateOnly.getTime() === today.getTime();
-          case 'yesterday':
-            return requestDateOnly.getTime() === yesterday.getTime();
-          case 'week':
-            return requestDateOnly >= weekAgo;
-          case 'month':
-            return requestDateOnly >= monthAgo;
-          default:
-            return true;
-        }
-      });
+          switch (this.dateFilter) {
+            case 'today':
+              return requestDateOnly.getTime() === today.getTime();
+            case 'yesterday':
+              return requestDateOnly.getTime() === yesterday.getTime();
+            case 'week':
+              return requestDateOnly >= weekAgo;
+            case 'month':
+              return requestDateOnly >= monthAgo;
+            default:
+              return true;
+          }
+        });
+      }
+      
+      return filteredRequests;
     },
     
     // Group filtered requests by status
@@ -361,9 +438,9 @@ export default {
         Rejected: []
       };
       this.filteredRequestsByDate.forEach(request => {
-        if (grouped.hasOwnProperty(request.status)) {
+        if (request.status && grouped.hasOwnProperty(request.status)) {
           grouped[request.status].push(request);
-        } else {
+        } else if (request.status) {
           // Handle any other status values if they exist
           if (!grouped[request.status]) {
             grouped[request.status] = [];
@@ -372,7 +449,12 @@ export default {
         }
       });
       return grouped;
-    }
+    },
+    
+    // All requests for the count in sidebar
+    allRequests() {
+      return this.requests;
+    },
   },
   methods: {
     async fetchRequests() {
@@ -393,6 +475,15 @@ export default {
     setDateFilter(filter) {
       this.dateFilter = filter;
     },
+    // Set the request type filter (all, return, exchange)
+    setRequestType(type) {
+      this.requestType = type;
+    },
+    // Get requests by type
+    getRequestsByType(type) {
+      return (this.requests || []).filter(request => request.type && request.type === type);
+    },
+    
     async updateRequestStatus(id, status) {
       try {
         // THIS IS THE FIX: We must pass the status in the request body.
@@ -410,7 +501,7 @@ export default {
     },
     // Get requests by status
     getRequestsByStatus(status) {
-      return this.requestsByStatus[status] || [];
+      return (this.requestsByStatus && this.requestsByStatus[status]) || [];
     },
     formatCurrency(value) {
         if (!value) return '$0.00';
