@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
     <!-- Sidebar Navigation -->
-    <div class="w-64 bg-white shadow-xl border-r border-gray-200 p-5 flex flex-col">
+    <div class="w-64 bg-gradient-to-b from-gray-50 to-blue-50 shadow-xl border-r border-gray-200 p-5 flex flex-col">
       <div class="mb-8">
         <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           Return Exchange
@@ -14,11 +14,25 @@
         <ul class="space-y-1">
           <li>
             <router-link 
+              :to="{ name: 'AdminOrders' }"
+              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
+                       $route.name === 'AdminOrders'
+                         ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
+                         : 'text-gray-800 hover:bg-gray-100 hover:translate-x-1']"
+            >
+                <span class="font-medium">All Orders</span>
+                <span class="bg-amber-100 text-amber-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
+                  {{ orderCount }}
+                </span>
+            </router-link>
+          </li>
+          <li class="mt-2">
+            <router-link 
               :to="{ name: 'AdminAll' }"
               :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
-                       (($route.name === 'AdminAll' || $route.name === 'AdminPending' || $route.name === 'AdminApproved' || $route.name === 'AdminRefunded' || $route.name === 'AdminRejected') && (!($route.matched[0] && ($route.matched[0].name === 'AdminReturns' || $route.matched[0].name === 'AdminExchanges')))
+                       (isActiveAllRoute) 
                          ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-l-4 border-blue-500 shadow-sm' 
-                         : 'text-gray-700 hover:bg-gray-50 hover:translate-x-1')]"
+                         : 'text-gray-800 hover:bg-gray-100 hover:translate-x-1']"
             >
                 <span class="font-medium">All Requests</span>
                 <span class="bg-blue-100 text-blue-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
@@ -32,7 +46,7 @@
               :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
                        ($route.matched[0] && $route.matched[0].name === 'AdminReturns')
                          ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-l-4 border-green-500 shadow-sm' 
-                         : 'text-gray-700 hover:bg-gray-50 hover:translate-x-1']"
+                         : 'text-gray-800 hover:bg-gray-100 hover:translate-x-1']"
             >
                 <span class="font-medium">Returns</span>
                 <span class="bg-green-100 text-green-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
@@ -46,25 +60,11 @@
               :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
                        ($route.matched[0] && $route.matched[0].name === 'AdminExchanges')
                          ? 'bg-gradient-to-r from-purple-50 to-violet-50 text-purple-700 border-l-4 border-purple-500 shadow-sm' 
-                         : 'text-gray-700 hover:bg-gray-50 hover:translate-x-1']"
+                         : 'text-gray-800 hover:bg-gray-100 hover:translate-x-1']"
             >
                 <span class="font-medium">Exchanges</span>
                 <span class="bg-purple-100 text-purple-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
                   {{ getRequestsByType('Exchange').length }}
-                </span>
-            </router-link>
-          </li>
-          <li class="mt-2">
-            <router-link 
-              :to="{ name: 'AdminOrders' }"
-              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
-                       $route.name === 'AdminOrders'
-                         ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
-                         : 'text-gray-700 hover:bg-gray-50 hover:translate-x-1']"
-            >
-                <span class="font-medium">All Orders</span>
-                <span class="bg-amber-100 text-amber-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
-                  {{ orderCount }}
                 </span>
             </router-link>
           </li>
@@ -73,9 +73,9 @@
       
       <!-- Navigation Section Only -->
       <div class="mt-auto pt-6 border-t border-gray-200">
-        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+        <div class="flex items-center space-x-3 p-3 bg-white bg-opacity-75 rounded-lg">
           <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span class="text-xs text-gray-600">Live Status</span>
+          <span class="text-xs text-gray-700">Live Status</span>
         </div>
       </div>
     </div>
@@ -93,8 +93,9 @@
         <!-- Top section with title, counts, and sync button -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h2 class="text-2xl font-bold text-gray-900">
+            <h2 class="text-2xl font-bold text-gray-900 relative pb-3">
               {{ requestType === 'all' ? 'All Requests' : requestType + ' Requests' }}
+              <span class="absolute bottom-0 left-0 w-16 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500"></span>
             </h2>
             <p class="text-gray-600 text-sm">Manage and process return and exchange requests</p>
           </div>
@@ -215,6 +216,15 @@ export default {
       }
       return 'all'; // Default to all for AdminAll route and status routes under all
     },
+    
+    isActiveAllRoute() {
+      return ((this.$route.name === 'AdminAll' || this.$route.name === 'AdminPending' || 
+               this.$route.name === 'AdminApproved' || this.$route.name === 'AdminRefunded' || 
+               this.$route.name === 'AdminRejected') && 
+              (!(this.$route.matched[0] && (this.$route.matched[0].name === 'AdminReturns' || 
+               this.$route.matched[0].name === 'AdminExchanges'))));
+    },
+    
     // Filter requests by date and type
     // Filter requests by date and type
     filteredRequestsByDate() {

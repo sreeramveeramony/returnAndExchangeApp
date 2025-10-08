@@ -60,7 +60,7 @@ export default {
   props: {
     activeTab: {
       type: String,
-      default: 'pending'
+      default: 'pending' 
     },
     counts: {
       type: Object,
