@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
     <!-- Sidebar Navigation -->
-    <div class="w-64 bg-gradient-to-b from-gray-50 to-blue-50 shadow-xl border-r border-gray-200 p-5 flex flex-col">
+    <div class="w-64 bg-white shadow-lg border-r border-gray-200 p-5 flex flex-col">
       <div class="mb-8">
         <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           Return Exchange
@@ -15,13 +15,18 @@
           <li>
             <router-link 
               :to="{ name: 'AdminOrders' }"
-              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
+              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-lg transition-all duration-200 flex justify-between items-center border-l-4', 
                        $route.name === 'AdminOrders'
-                         ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
-                         : 'text-gray-800 hover:bg-gray-100 hover:translate-x-1']"
+                         ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-500' 
+                         : 'text-gray-700 hover:bg-gray-50 border-l-4 border-transparent']"
             >
-                <span class="font-medium">All Orders</span>
-                <span class="bg-amber-100 text-amber-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
+                <span class="font-medium flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  All Orders
+                </span>
+                <span class="bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2.5 rounded-full min-w-[32px] text-center">
                   {{ orderCount }}
                 </span>
             </router-link>
@@ -29,13 +34,18 @@
           <li class="mt-2">
             <router-link 
               :to="{ name: 'AdminAll' }"
-              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
+              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-lg transition-all duration-200 flex justify-between items-center border-l-4', 
                        (isActiveAllRoute) 
-                         ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-l-4 border-blue-500 shadow-sm' 
-                         : 'text-gray-800 hover:bg-gray-100 hover:translate-x-1']"
+                         ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-500' 
+                         : 'text-gray-700 hover:bg-gray-50 border-l-4 border-transparent']"
             >
-                <span class="font-medium">All Requests</span>
-                <span class="bg-blue-100 text-blue-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
+                <span class="font-medium flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                  All Requests
+                </span>
+                <span class="bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2.5 rounded-full min-w-[32px] text-center">
                   {{ allRequests.length }}
                 </span>
             </router-link>
@@ -43,13 +53,18 @@
           <li class="mt-2">
             <router-link 
               :to="{ name: 'AdminReturns' }"
-              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
+              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-lg transition-all duration-200 flex justify-between items-center border-l-4', 
                        ($route.matched[0] && $route.matched[0].name === 'AdminReturns')
-                         ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-l-4 border-green-500 shadow-sm' 
-                         : 'text-gray-800 hover:bg-gray-100 hover:translate-x-1']"
+                         ? 'bg-green-50 text-green-700 border-l-4 border-green-500' 
+                         : 'text-gray-700 hover:bg-gray-50 border-l-4 border-transparent']"
             >
-                <span class="font-medium">Returns</span>
-                <span class="bg-green-100 text-green-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
+                <span class="font-medium flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Returns
+                </span>
+                <span class="bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2.5 rounded-full min-w-[32px] text-center">
                   {{ getRequestsByType('Return').length }}
                 </span>
             </router-link>
@@ -57,13 +72,18 @@
           <li class="mt-2">
             <router-link 
               :to="{ name: 'AdminExchanges' }"
-              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
+              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-lg transition-all duration-200 flex justify-between items-center border-l-4', 
                        ($route.matched[0] && $route.matched[0].name === 'AdminExchanges')
-                         ? 'bg-gradient-to-r from-purple-50 to-violet-50 text-purple-700 border-l-4 border-purple-500 shadow-sm' 
-                         : 'text-gray-800 hover:bg-gray-100 hover:translate-x-1']"
+                         ? 'bg-purple-50 text-purple-700 border-l-4 border-purple-500' 
+                         : 'text-gray-700 hover:bg-gray-50 border-l-4 border-transparent']"
             >
-                <span class="font-medium">Exchanges</span>
-                <span class="bg-purple-100 text-purple-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
+                <span class="font-medium flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                  Exchanges
+                </span>
+                <span class="bg-gray-100 text-gray-800 text-xs font-medium py-1 px-2.5 rounded-full min-w-[32px] text-center">
                   {{ getRequestsByType('Exchange').length }}
                 </span>
             </router-link>
@@ -71,11 +91,11 @@
         </ul>
       </nav>
       
-      <!-- Navigation Section Only -->
+      <!-- System Status -->
       <div class="mt-auto pt-6 border-t border-gray-200">
-        <div class="flex items-center space-x-3 p-3 bg-white bg-opacity-75 rounded-lg">
-          <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span class="text-xs text-gray-700">Live Status</span>
+        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+          <span class="text-xs font-medium text-gray-700">System Operational</span>
         </div>
       </div>
     </div>
@@ -91,71 +111,89 @@
       </div>
       <div v-else>
         <!-- Top section with title, counts, and sync button -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <h2 class="text-2xl font-bold text-gray-900 relative pb-3">
-              {{ requestType === 'all' ? 'All Requests' : requestType + ' Requests' }}
-              <span class="absolute bottom-0 left-0 w-16 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500"></span>
-            </h2>
-            <p class="text-gray-600 text-sm">Manage and process return and exchange requests</p>
-          </div>
-          <div class="flex items-center gap-4">
-            <div class="text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-full">
-              <span class="font-medium">{{ filteredRequestsByDate.length }}</span> of <span class="font-medium">{{ allRequests.length }}</span> requests
-              <span v-if="dateFilter !== 'all' && dateFilter !== 'all-time'" class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
-                {{ dateFilter.charAt(0).toUpperCase() + dateFilter.slice(1) }}
-              </span>
+        <div class="mb-8">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div>
+              <h2 class="text-3xl font-bold text-gray-900 mb-2">
+                {{ requestType === 'all' ? 'All Requests' : requestType + ' Requests' }}
+              </h2>
+              <p class="text-gray-600">Manage and process return and exchange requests</p>
+              <div class="relative mt-4">
+                <div class="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+              </div>
             </div>
-            <SyncButton 
-              @sync-start="handleSyncStart" 
-              @sync-success="handleSyncSuccess" 
-              @sync-error="handleSyncError" 
-            />
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div class="text-sm text-gray-700 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
+                <span class="font-semibold text-gray-900">{{ filteredRequestsByDate.length }}</span> of <span class="font-medium text-gray-900">{{ allRequests.length }}</span> requests
+                <span v-if="dateFilter !== 'all' && dateFilter !== 'all-time'" class="ml-3 px-2.5 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium rounded-full border border-blue-200">
+                  {{ dateFilter.charAt(0).toUpperCase() + dateFilter.slice(1) }}
+                </span>
+              </div>
+              <div>
+                <SyncButton 
+                  @sync-start="handleSyncStart" 
+                  @sync-success="handleSyncSuccess" 
+                  @sync-error="handleSyncError" 
+                />
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Request Status Navigation Bar (above date filter) -->
-        <div class="flex flex-wrap border-b border-gray-200 mb-4 pb-0.5">
+        <div class="flex flex-wrap gap-2 mb-6">
           <router-link 
             :to="getStatusRoute('Pending')"
-            class="px-5 py-3 text-sm font-semibold rounded-t-lg border-b-0 mr-1 mb-0 transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-            :class="[isActiveStatusRoute('Pending') ? 'bg-blue-100 text-blue-700 border border-gray-300 border-b-0 border-t-2 border-t-blue-500 -mb-0.5' : '']"
+            class="px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center"
+            :class="[isActiveStatusRoute('Pending') ? 'bg-blue-100 text-blue-800 font-semibold' : 'text-gray-600 hover:bg-gray-100']"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             Requested
-            <span class="ml-2 bg-blue-500 text-white text-xs font-medium py-0.5 px-2 rounded-full">
+            <span class="ml-2 bg-blue-500 text-white text-xs font-medium py-0.5 px-2 rounded-full min-w-[24px]">
               {{ getRequestsByStatus('Pending').length }}
             </span>
           </router-link>
           
           <router-link 
             :to="getStatusRoute('Approved')"
-            class="px-5 py-3 text-sm font-semibold rounded-t-lg border-b-0 mr-1 mb-0 transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-            :class="[isActiveStatusRoute('Approved') ? 'bg-green-100 text-green-700 border border-gray-300 border-b-0 border-t-2 border-t-green-500 -mb-0.5' : '']"
+            class="px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center"
+            :class="[isActiveStatusRoute('Approved') ? 'bg-green-100 text-green-800 font-semibold' : 'text-gray-600 hover:bg-gray-100']"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             Approved
-            <span class="ml-2 bg-green-500 text-white text-xs font-medium py-0.5 px-2 rounded-full">
+            <span class="ml-2 bg-green-500 text-white text-xs font-medium py-0.5 px-2 rounded-full min-w-[24px]">
               {{ getRequestsByStatus('Approved').length }}
             </span>
           </router-link>
           
           <router-link 
             :to="getStatusRoute('Refunded')"
-            class="px-5 py-3 text-sm font-semibold rounded-t-lg border-b-0 mr-1 mb-0 transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-            :class="[isActiveStatusRoute('Refunded') ? 'bg-blue-500 text-white border border-blue-500 border-b-0 border-t-2 border-t-blue-600 -mb-0.5' : '']"
+            class="px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center"
+            :class="[isActiveStatusRoute('Refunded') ? 'bg-indigo-100 text-indigo-800 font-semibold' : 'text-gray-600 hover:bg-gray-100']"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
             Refunded
-            <span class="ml-2 bg-blue-600 text-white text-xs font-medium py-0.5 px-2 rounded-full">
+            <span class="ml-2 bg-indigo-500 text-white text-xs font-medium py-0.5 px-2 rounded-full min-w-[24px]">
               {{ getRequestsByStatus('Refunded').length }}
             </span>
           </router-link>
           
           <router-link 
             :to="getStatusRoute('Rejected')"
-            class="px-5 py-3 text-sm font-semibold rounded-t-lg border-b-0 mr-1 mb-0 transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-            :class="[isActiveStatusRoute('Rejected') ? 'bg-red-100 text-red-700 border border-gray-300 border-b-0 border-t-2 border-t-red-500 -mb-0.5' : '']"
+            class="px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center"
+            :class="[isActiveStatusRoute('Rejected') ? 'bg-red-100 text-red-800 font-semibold' : 'text-gray-600 hover:bg-gray-100']"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
             Rejected
-            <span class="ml-2 bg-red-500 text-white text-xs font-medium py-0.5 px-2 rounded-full">
+            <span class="ml-2 bg-red-500 text-white text-xs font-medium py-0.5 px-2 rounded-full min-w-[24px]">
               {{ getRequestsByStatus('Rejected').length }}
             </span>
           </router-link>

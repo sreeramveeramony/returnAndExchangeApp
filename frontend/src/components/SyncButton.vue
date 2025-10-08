@@ -2,7 +2,7 @@
   <button 
     @click="syncOrders" 
     :disabled="syncing"
-    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md text-sm transition duration-150 flex items-center shadow-md hover:shadow-lg"
+    class="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition duration-200 flex items-center shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
   >
     <span v-if="syncing" class="flex items-center">
       <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
