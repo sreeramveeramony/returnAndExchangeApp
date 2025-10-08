@@ -9,6 +9,7 @@ import RefundedRequests from '../views/admin/RefundedRequests.vue';
 import RejectedRequests from '../views/admin/RejectedRequests.vue';
 import ReturnRequests from '../views/admin/ReturnRequests.vue';
 import ExchangeRequests from '../views/admin/ExchangeRequests.vue';
+import Orders from '../views/admin/Orders.vue';
 
 const routes = [
   {
@@ -16,6 +17,7 @@ const routes = [
     name: 'OrderLookup',
     component: OrderLookup,
   },
+ 
   {
     path: '/select-items',
     name: 'ReturnExchange',
@@ -24,9 +26,23 @@ const routes = [
   },
   {
     path: '/admin',
-    name: 'AdminAll',
+    name: 'AdminDashboard',
     component: AdminDashboard,
     children: [
+      {
+        path: '',
+        redirect: '/admin/orders'  // Redirect to /admin/orders
+      },
+      {
+        path: 'orders',
+        name: 'AdminOrders',
+        component: Orders
+      },
+      {
+        path: 'all',
+        name: 'AdminAll',
+        component: { render() { return null; } } // Placeholder, using default view
+      },
       {
         path: 'pending',
         name: 'AdminPending',
@@ -55,6 +71,11 @@ const routes = [
     component: AdminDashboard,
     children: [
       {
+        path: '',
+        name: 'AdminReturnRequests', // Added name to the empty path child
+        component: ReturnRequests  // This will show the return-specific layout
+      },
+      {
         path: 'pending',
         name: 'AdminReturnPending',
         component: PendingRequests
@@ -81,6 +102,11 @@ const routes = [
     name: 'AdminExchanges',
     component: AdminDashboard,
     children: [
+      {
+        path: '',
+        name: 'AdminExchangeRequests', // Added name to the empty path child
+        component: ExchangeRequests  // This will show the exchange-specific layout
+      },
       {
         path: 'pending',
         name: 'AdminExchangePending',
@@ -119,14 +145,7 @@ const routes = [
     path: '/admin/rejected',
     redirect: { name: 'AdminRejected' }
   },
-  {
-    path: '/admin/returns',
-    redirect: { name: 'AdminReturns' }
-  },
-  {
-    path: '/admin/exchanges',
-    redirect: { name: 'AdminExchanges' }
-  },
+
   {
     path: '/confirmation',
     name: 'RequestConfirmation',

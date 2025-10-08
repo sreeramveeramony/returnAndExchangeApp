@@ -54,6 +54,20 @@
                 </span>
             </router-link>
           </li>
+          <li class="mt-2">
+            <router-link 
+              :to="{ name: 'AdminOrders' }"
+              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
+                       $route.name === 'AdminOrders'
+                         ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
+                         : 'text-gray-700 hover:bg-gray-50 hover:translate-x-1']"
+            >
+                <span class="font-medium">All Orders</span>
+                <span class="bg-amber-100 text-amber-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
+                  {{ orderCount }}
+                </span>
+            </router-link>
+          </li>
         </ul>
       </nav>
       
@@ -76,27 +90,35 @@
         <p class="text-red-700">{{ error }}</p>
       </div>
       <div v-else>
-        <div class="mb-8">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+        <!-- Top section with title, counts, and sync button -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
             <h2 class="text-2xl font-bold text-gray-900">
               {{ requestType === 'all' ? 'All Requests' : requestType + ' Requests' }}
             </h2>
+            <p class="text-gray-600 text-sm">Manage and process return and exchange requests</p>
+          </div>
+          <div class="flex items-center gap-4">
             <div class="text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-full">
               <span class="font-medium">{{ filteredRequestsByDate.length }}</span> of <span class="font-medium">{{ allRequests.length }}</span> requests
               <span v-if="dateFilter !== 'all' && dateFilter !== 'all-time'" class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
                 {{ dateFilter.charAt(0).toUpperCase() + dateFilter.slice(1) }}
               </span>
             </div>
+            <SyncButton 
+              @sync-start="handleSyncStart" 
+              @sync-success="handleSyncSuccess" 
+              @sync-error="handleSyncError" 
+            />
           </div>
-          <p class="text-gray-600 text-sm">Manage and process return and exchange requests</p>
         </div>
-        
+
         <!-- Request Status Navigation Bar (above date filter) -->
         <div class="flex flex-wrap border-b border-gray-200 mb-4 pb-0.5">
           <router-link 
-            :to="{ name: 'AdminPending' }"
+            :to="getStatusRoute('Pending')"
             class="px-5 py-3 text-sm font-semibold rounded-t-lg border-b-0 mr-1 mb-0 transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-            :class="[$route.name === 'AdminPending' ? 'bg-blue-100 text-blue-700 border border-gray-300 border-b-0 border-t-2 border-t-blue-500 -mb-0.5' : '']"
+            :class="[isActiveStatusRoute('Pending') ? 'bg-blue-100 text-blue-700 border border-gray-300 border-b-0 border-t-2 border-t-blue-500 -mb-0.5' : '']"
           >
             Requested
             <span class="ml-2 bg-blue-500 text-white text-xs font-medium py-0.5 px-2 rounded-full">
@@ -105,9 +127,9 @@
           </router-link>
           
           <router-link 
-            :to="{ name: 'AdminApproved' }"
+            :to="getStatusRoute('Approved')"
             class="px-5 py-3 text-sm font-semibold rounded-t-lg border-b-0 mr-1 mb-0 transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-            :class="[$route.name === 'AdminApproved' ? 'bg-green-100 text-green-700 border border-gray-300 border-b-0 border-t-2 border-t-green-500 -mb-0.5' : '']"
+            :class="[isActiveStatusRoute('Approved') ? 'bg-green-100 text-green-700 border border-gray-300 border-b-0 border-t-2 border-t-green-500 -mb-0.5' : '']"
           >
             Approved
             <span class="ml-2 bg-green-500 text-white text-xs font-medium py-0.5 px-2 rounded-full">
@@ -116,9 +138,9 @@
           </router-link>
           
           <router-link 
-            :to="{ name: 'AdminRefunded' }"
+            :to="getStatusRoute('Refunded')"
             class="px-5 py-3 text-sm font-semibold rounded-t-lg border-b-0 mr-1 mb-0 transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-            :class="[$route.name === 'AdminRefunded' ? 'bg-blue-500 text-white border border-blue-500 border-b-0 border-t-2 border-t-blue-600 -mb-0.5' : '']"
+            :class="[isActiveStatusRoute('Refunded') ? 'bg-blue-500 text-white border border-blue-500 border-b-0 border-t-2 border-t-blue-600 -mb-0.5' : '']"
           >
             Refunded
             <span class="ml-2 bg-blue-600 text-white text-xs font-medium py-0.5 px-2 rounded-full">
@@ -127,9 +149,9 @@
           </router-link>
           
           <router-link 
-            :to="{ name: 'AdminRejected' }"
+            :to="getStatusRoute('Rejected')"
             class="px-5 py-3 text-sm font-semibold rounded-t-lg border-b-0 mr-1 mb-0 transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-            :class="[$route.name === 'AdminRejected' ? 'bg-red-100 text-red-700 border border-gray-300 border-b-0 border-t-2 border-t-red-500 -mb-0.5' : '']"
+            :class="[isActiveStatusRoute('Rejected') ? 'bg-red-100 text-red-700 border border-gray-300 border-b-0 border-t-2 border-t-red-500 -mb-0.5' : '']"
           >
             Rejected
             <span class="ml-2 bg-red-500 text-white text-xs font-medium py-0.5 px-2 rounded-full">
@@ -160,12 +182,14 @@
 import axios from 'axios';
 import StatusFilter from '../../components/StatusFilter.vue';
 import FilterBar from '../../components/FilterBar.vue';
+import SyncButton from '../../components/SyncButton.vue';
 
 export default {
   name: 'AdminDashboard',
   components: {
     StatusFilter,
-    FilterBar
+    FilterBar,
+    SyncButton
   },
   data() {
     return {
@@ -173,10 +197,13 @@ export default {
       isLoading: true,
       error: null,
       dateFilter: 'all', // Default to showing all requests
+      syncMessage: null,
+      orderCount: 0 // Add order count to data
     };
   },
   async created() {
     await this.fetchRequests();
+    await this.loadOrderCount();
   },
   computed: {
     requestType() {
@@ -257,6 +284,9 @@ export default {
     allRequests() {
       return this.requests;
     },
+    
+    // Count of all orders 
+    // The actual count is stored in the data property and updated via fetchOrdersCount
   },
   methods: {
     async fetchRequests() {
@@ -288,16 +318,19 @@ export default {
     
     async updateRequestStatus(id, status) {
       try {
-        // THIS IS THE FIX: We must pass the status in the request body.
+        // Update the request status in the database
         const response = await axios.patch(`http://localhost:3001/api/requests/${id}`, { status });
         const index = this.requests.findIndex(req => req._id === id);
         if (index !== -1) {
           this.requests[index].status = response.data.status;
         }
+        
+        // The local order status will be updated as part of the request update process
+        // The Shopify API call is handled within the request update endpoint
       } catch (err) {
         // More descriptive error handling for the UI
         const errorMessage = (err.response && err.response.data && err.response.data.message) || 'An unknown error occurred while updating the status.';
-        alert(`Failed to update request: ${errorMessage}`); // Using alert for immediate feedback in admin panel
+        alert("Return or Exchange is already initiated for this order"); // Using alert for immediate feedback in admin panel
         console.error('Update Request Error:', err);
       }
     },
@@ -334,6 +367,81 @@ export default {
         default:
           return 'bg-gray-100 text-gray-800';
       }
+    },
+    
+    handleSyncStart() {
+      this.syncMessage = 'Starting sync...';
+    },
+    
+    async handleSyncSuccess(message) {
+      this.syncMessage = message;
+      // Refresh the requests list
+      await this.fetchRequests();
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        this.syncMessage = null;
+      }, 3000);
+    },
+    
+    handleSyncError(message) {
+      this.syncMessage = message;
+      console.error('Sync Error:', message);
+    },
+    
+    async loadOrderCount() {
+      try {
+        const response = await axios.get('http://localhost:3001/api/orders');
+        this.orderCount = response.data.length;
+      } catch (err) {
+        console.error('Failed to fetch order count:', err);
+        this.orderCount = 0;
+      }
+    },
+    
+    // Generate the correct route name based on current context (all, returns, exchanges)
+    getStatusRoute(status) {
+      // Determine the base route name based on current context
+      let baseRoute = 'Admin';
+      
+      if (this.$route.name === 'AdminReturns' || this.$route.matched.some(r => r && r.name === 'AdminReturns')) {
+        baseRoute = 'AdminReturn';
+      } else if (this.$route.name === 'AdminExchanges' || this.$route.matched.some(r => r && r.name === 'AdminExchanges')) {
+        baseRoute = 'AdminExchange';
+      }
+      
+      // Map status to the appropriate route suffix
+      const statusMap = {
+        'Pending': 'Pending',
+        'Approved': 'Approved', 
+        'Refunded': 'Refunded',
+        'Rejected': 'Rejected'
+      };
+      
+      const routeName = baseRoute + statusMap[status];
+      
+      return { name: routeName };
+    },
+    
+    // Check if the current route matches a specific status route
+    isActiveStatusRoute(status) {
+      let baseRoute = 'Admin';
+      
+      if (this.$route.name === 'AdminReturns' || this.$route.matched.some(r => r && r.name === 'AdminReturns')) {
+        baseRoute = 'AdminReturn';
+      } else if (this.$route.name === 'AdminExchanges' || this.$route.matched.some(r => r && r.name === 'AdminExchanges')) {
+        baseRoute = 'AdminExchange';
+      }
+      
+      const statusMap = {
+        'Pending': 'Pending',
+        'Approved': 'Approved', 
+        'Refunded': 'Refunded',
+        'Rejected': 'Rejected'
+      };
+      
+      const routeName = baseRoute + statusMap[status];
+      
+      return this.$route.name === routeName;
     }
   },
 };

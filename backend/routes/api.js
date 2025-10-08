@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const Request = require('../models/Request');
+const Order = require('../models/Order');
 
 const SHOPIFY_SHOP_URL      = process.env.SHOPIFY_SHOP_URL;     // e.g. my-shop.myshopify.com
 const SHOPIFY_ACCESS_TOKEN  = process.env.SHOPIFY_ACCESS_TOKEN;
@@ -107,6 +108,25 @@ router.post('/requests', async (req, res) => {
       originalOrder,
       status: 'Pending',
     });
+
+    // Update the corresponding order in the local DB to track the request
+    try {
+      await Order.findOneAndUpdate(
+        { id: originalOrder.id },  // Find by Shopify order ID
+        { 
+          $set: { 
+            returnRequest: {
+              requestType: type,
+              status: 'Pending',
+              request_id: newRequest._id
+            }
+          }
+        }
+      );
+    } catch (orderUpdateErr) {
+      console.error('Error updating order with return request:', orderUpdateErr);
+      // Don't fail the entire request creation if order update fails
+    }
 
     return res.status(201).json(newRequest);
   } catch (error) {
@@ -226,9 +246,14 @@ router.patch('/requests/:id', async (req, res) => {
         if (!fulfillmentLineItemId) {
           throw new Error(`Item "${item.title}" (LineItem key: ${item.lineItemId}) cannot be returned because it has not been fulfilled.`);
         }
+        // Ensure quantity is always a positive integer
+        const quantityValue = parseInt(item.quantity);
+        if (isNaN(quantityValue) || quantityValue <= 0) {
+          throw new Error(`Invalid quantity for item \"${item.title}\": ${item.quantity}`);
+        }
         return {
           fulfillmentLineItemId,
-          quantity: Number(item.quantity) || 1,
+          quantity: quantityValue,
           returnReason: 'SIZE_TOO_SMALL'
         };
       });
@@ -237,10 +262,16 @@ router.patch('/requests/:id', async (req, res) => {
       let exchangeLineItems = undefined;
       if (request.type === 'Exchange' && request.exchangeItem) {
         const variantId = request.exchangeItem.variantId;
-        const qty       = Number(request.exchangeItem.quantity) || 1;
         if (!variantId) {
           throw new Error('Exchange requires exchangeItem.variantId.');
         }
+        
+        // Ensure exchange quantity is always a positive integer
+        const qty = parseInt(request.exchangeItem.quantity);
+        if (isNaN(qty) || qty <= 0) {
+          throw new Error(`Invalid exchange quantity: ${request.exchangeItem.quantity}`);
+        }
+        
         // GraphQL GID for ProductVariant if you stored numeric id
         const variantGid = String(variantId).startsWith('gid://')
           ? variantId
@@ -270,10 +301,241 @@ router.patch('/requests/:id', async (req, res) => {
 
     request.status = status;
     const updated = await request.save();
+    
+    // Update the corresponding order in the local DB with the new status
+    try {
+      await Order.findOneAndUpdate(
+        { id: request.originalOrder.id },  // Find by Shopify order ID
+        { 
+          $set: { 
+            returnRequest: {
+              requestType: request.type,
+              status: status,
+              request_id: request._id
+            }
+          }
+        }
+      );
+    } catch (orderUpdateErr) {
+      console.error('Error updating order with return request status:', orderUpdateErr);
+      // Don't fail the entire request update if order update fails
+    }
+    
     return res.json(updated);
   } catch (error) {
     console.error('Failed to update/process request:', error);
     return res.status(400).json({ message: `Failed to process request: ${error.message}` });
+  }
+});
+
+// -----------------------------
+// GET /api/orders - Fetch all orders from the local DB
+// -----------------------------
+router.get('/orders', async (_req, res) => {
+  try {
+    // Fetch all orders sorted by creation date (newest first)
+    const orders = await Order.find().sort({ createdAt: -1 });
+    return res.json(orders);
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    return res.status(500).json({ message: 'Failed to fetch orders', error: error.message });
+  }
+});
+
+// -----------------------------
+// POST /api/orders/lookup - Lookup a specific order by number and email from local DB
+// -----------------------------
+router.post('/orders/lookup', async (req, res) => {
+  const { orderNumber, email } = req.body;
+
+  if (!orderNumber || !email) {
+    return res.status(400).json({ message: 'Order number and email are required.' });
+  }
+
+  try {
+    const raw = String(orderNumber).trim();
+    const nameQuery = raw.startsWith('#') ? raw : `#${raw}`;
+
+    // Find order by name in the local DB
+    const order = await Order.findOne({ name: nameQuery });
+    
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found in local database.' });
+    }
+
+    // Check if email matches
+    const orderEmail = String(
+      order.email || order.customer?.email || ''
+    ).toLowerCase();
+
+    if (!orderEmail || orderEmail !== String(email).trim().toLowerCase()) {
+      return res.status(403).json({ message: 'Email does not match the order records.' });
+    }
+
+    // Return the order data in the same format expected by the frontend
+    // This includes all fields required for the return/exchange process
+    const orderResponse = {
+      id: order.id,
+      name: order.name,
+      email: order.email,
+      created_at: order.created_at,
+      updated_at: order.updated_at,
+      financial_status: order.financial_status,
+      total_price: order.total_price,
+      currency: order.currency,
+      customer: order.customer,
+      billing_address: order.billing_address,
+      shipping_address: order.shipping_address,
+      line_items: order.line_items
+    };
+    
+    return res.json(orderResponse);
+  } catch (error) {
+    console.error('Error looking up order from local DB:', error);
+    return res.status(500).json({ message: 'An error occurred while finding your order.' });
+  }
+});
+
+// -----------------------------
+// POST /api/sync-orders - Sync orders from Shopify to local DB
+// -----------------------------
+router.post('/sync-orders', async (_req, res) => {
+  try {
+    console.log('Starting order sync from Shopify...');
+    
+    // Fetch recent orders from Shopify API
+    const url = `https://${SHOPIFY_SHOP_URL}/admin/api/${ADMIN_API_VERSION}/orders.json?status=any&limit=50`;
+    
+    let response;
+    try {
+      response = await axios.get(url, {
+        headers: {
+          'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (shopifyErr) {
+      console.error('Error fetching orders from Shopify:', shopifyErr.response?.data || shopifyErr.message);
+      return res.status(500).json({ 
+        message: 'Failed to fetch orders from Shopify API', 
+        error: shopifyErr.message 
+      });
+    }
+
+    const shopifyOrders = response.data?.orders || [];
+    let processed = 0;
+    
+    for (const shopifyOrder of shopifyOrders) {
+      // Check if order already exists in local DB
+      const existingOrder = await Order.findOne({ id: shopifyOrder.id });
+      
+      if (existingOrder) {
+        // Only update if we have an email
+        const email = shopifyOrder.email || shopifyOrder.contact_email;
+        if (email) {
+          existingOrder.name = shopifyOrder.name || existingOrder.name;
+          existingOrder.email = email;
+          existingOrder.created_at = shopifyOrder.created_at || existingOrder.created_at;
+          existingOrder.updated_at = shopifyOrder.updated_at || existingOrder.updated_at;
+          existingOrder.financial_status = shopifyOrder.financial_status || existingOrder.financial_status;
+          existingOrder.total_price = shopifyOrder.total_price || existingOrder.total_price;
+          existingOrder.currency = shopifyOrder.currency || existingOrder.currency;
+          existingOrder.customer = shopifyOrder.customer || existingOrder.customer;
+          existingOrder.billing_address = shopifyOrder.billing_address || existingOrder.billing_address;
+          existingOrder.shipping_address = shopifyOrder.shipping_address || existingOrder.shipping_address;
+          existingOrder.line_items = shopifyOrder.line_items || existingOrder.line_items;
+          
+          await existingOrder.save();
+        } else {
+          console.log(`Skipping update for order ${shopifyOrder.id} - no email available`);
+        }
+      } else {
+        // Create new order in local DB only if email is available
+        const email = shopifyOrder.email || shopifyOrder.contact_email;
+        if (!email) {
+          console.log(`Skipping order ${shopifyOrder.id} - no email available`);
+          continue; // Skip orders without email
+        }
+        
+        const orderData = {
+          id: shopifyOrder.id,
+          name: shopifyOrder.name || '',
+          email: email,
+          created_at: shopifyOrder.created_at || new Date().toISOString(),
+          updated_at: shopifyOrder.updated_at || new Date().toISOString(),
+          financial_status: shopifyOrder.financial_status || 'unknown',
+          total_price: shopifyOrder.total_price || '0.00',
+          currency: shopifyOrder.currency || 'USD',
+          customer: shopifyOrder.customer || {},
+          billing_address: shopifyOrder.billing_address || {},
+          shipping_address: shopifyOrder.shipping_address || {},
+          line_items: shopifyOrder.line_items || []
+        };
+        
+        await Order.create(orderData);
+      }
+      processed++;
+    }
+    
+    console.log(`Sync completed. Processed ${processed} orders.`);
+    return res.json({ 
+      message: `Successfully synced ${processed} orders from Shopify`, 
+      processed: processed 
+    });
+    
+  } catch (error) {
+    console.error('Error syncing orders:', error);
+    return res.status(500).json({ 
+      message: 'Failed to sync orders from Shopify', 
+      error: error.message 
+    });
+  }
+});
+
+// -----------------------------
+// PATCH /api/orders/:id/update-status - Update order status in local DB when return is approved
+// -----------------------------
+router.patch('/orders/:id/update-status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    // Find the order by its Shopify ID (numeric)
+    const orderId = parseInt(id);
+    if (isNaN(orderId)) {
+      return res.status(400).json({ message: 'Invalid order ID format.' });
+    }
+    const order = await Order.findOne({ id: orderId });
+    
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found in local database.' });
+    }
+    
+    // Update the return request status for this order
+    if (order.returnRequest) {
+      // Preserve the existing request type if it exists
+      order.returnRequest.status = status;
+    } else {
+      // If no existing return request, we can't set type without additional info
+      // So we just initialize with status
+      order.returnRequest = {
+        status: status
+      };
+    }
+    
+    await order.save();
+    
+    return res.json({ 
+      message: `Order status updated successfully`, 
+      orderId: order.id 
+    });
+    
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    return res.status(500).json({ 
+      message: 'Failed to update order status', 
+      error: error.message 
+    });
   }
 });
 

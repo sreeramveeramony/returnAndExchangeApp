@@ -113,7 +113,8 @@ export default {
       this.isLoading = true;
       this.error = null;
       try {
-        const response = await axios.post('http://localhost:3001/api/lookup-order', {
+        // Changed to fetch from local DB instead of Shopify API
+        const response = await axios.post('http://localhost:3001/api/orders/lookup', {
           orderNumber: this.orderNumber.startsWith('#') ? this.orderNumber : `#${this.orderNumber}`,
           email: this.email,
         });
