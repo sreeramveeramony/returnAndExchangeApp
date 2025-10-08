@@ -4,7 +4,11 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "serve:customer": "vue-cli-service serve --mode customer",
+    "serve:admin": "vue-cli-service serve --mode admin",
+    "build": "vue-cli-service build",
+    "build:customer": "vue-cli-service build --mode customer",
+    "build:admin": "vue-cli-service build --mode admin"
   },
   "dependencies": {
     "axios": "^0.21.4",

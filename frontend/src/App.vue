@@ -1,6 +1,7 @@
 <template>
   <div id="app" class="bg-gray-50 min-h-screen">
-    <header class="bg-gradient-to-r from-gray-100 to-blue-100 shadow-sm border-b">
+    <!-- Show header based on environment or route -->
+    <header v-if="showHeader" class="bg-gradient-to-r from-gray-100 to-blue-100 shadow-sm border-b">
       <div class="container mx-auto px-4 py-4">
         <div class="flex items-center">
           <!-- Logo and App Name -->
@@ -45,13 +46,19 @@
         </div>
       </div>
     </header>
+    
     <main class="container mx-auto px-4 py-8">
       <router-view />
     </main>
-    <footer class="text-center py-4 text-gray-500 text-sm bg-white border-t">
+    <footer v-if="showHeader" class="text-center py-4 text-gray-500 text-sm bg-white border-t">
       <div class="container mx-auto px-4">
         &copy; {{ new Date().getFullYear() }} REEX - Return & Exchange Portal. All rights reserved.
       </div>
+    </footer>
+    
+    <!-- Customer pages footer without header -->
+    <footer v-else class="text-center py-4 text-gray-500 text-sm">
+      Powered by REEX
     </footer>
   </div>
 </template>
@@ -59,6 +66,20 @@
 <script>
 export default {
   name: 'App',
+  computed: {
+    showHeader() {
+      // Check environment variable to determine interface type
+      // If VUE_APP_INTERFACE is 'admin', show header (admin interface)
+      // Otherwise, don't show header for customer interface
+      return process.env.VUE_APP_INTERFACE === 'admin';
+    }
+  },
+  mounted() {
+    // If running in admin mode and on root path, redirect to admin
+    if (process.env.VUE_APP_INTERFACE === 'admin' && this.$route.path === '/') {
+      this.$router.push('/admin');
+    }
+  }
 };
 </script>
 

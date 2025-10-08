@@ -1,6 +1,11 @@
 MEVN Stack Return Prime Clone
 This is a full-stack application that mimics the return and exchange functionality of the Shopify app "Return Prime". It's built with the MEVN stack (MongoDB, Express.js, Vue.js, Node.js).
 
+## Port Configuration
+- Customer Interface: Runs on port 8080 (no header/navigation)
+- Admin Interface: Runs on port 8081 (with full header/navigation)
+- Backend: Runs on port 3001
+
 Features
 Customer-Facing Flow: Customers can look up their order with an order number and email, select items for return or exchange, and submit a request.
 
@@ -43,7 +48,7 @@ Start the backend server:
 
 npm run dev
 
-The server will be running on http://localhost:3000.
+The server will be running on http://localhost:3001.
 
 Frontend
 Navigate to the frontend directory:
