@@ -9,15 +9,53 @@
         <p class="text-xs text-gray-500 mt-1">Admin Dashboard</p>
       </div>
       
-      <StatusFilter 
-        :requestType="requestType" 
-        :counts="{
-          all: allRequests.length,
-          return: getRequestsByType('Return').length,
-          exchange: getRequestsByType('Exchange').length
-        }"
-        @update:requestType="setRequestType"
-      />
+      <!-- Navigation with links to specific request types -->
+      <nav class="flex-1">
+        <ul class="space-y-1">
+          <li>
+            <router-link 
+              :to="{ name: 'AdminAll' }"
+              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
+                       (($route.name === 'AdminAll' || $route.name === 'AdminPending' || $route.name === 'AdminApproved' || $route.name === 'AdminRefunded' || $route.name === 'AdminRejected') && (!($route.matched[0] && ($route.matched[0].name === 'AdminReturns' || $route.matched[0].name === 'AdminExchanges')))
+                         ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-l-4 border-blue-500 shadow-sm' 
+                         : 'text-gray-700 hover:bg-gray-50 hover:translate-x-1')]"
+            >
+                <span class="font-medium">All Requests</span>
+                <span class="bg-blue-100 text-blue-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
+                  {{ allRequests.length }}
+                </span>
+            </router-link>
+          </li>
+          <li class="mt-2">
+            <router-link 
+              :to="{ name: 'AdminReturns' }"
+              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
+                       ($route.matched[0] && $route.matched[0].name === 'AdminReturns')
+                         ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-l-4 border-green-500 shadow-sm' 
+                         : 'text-gray-700 hover:bg-gray-50 hover:translate-x-1']"
+            >
+                <span class="font-medium">Returns</span>
+                <span class="bg-green-100 text-green-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
+                  {{ getRequestsByType('Return').length }}
+                </span>
+            </router-link>
+          </li>
+          <li class="mt-2">
+            <router-link 
+              :to="{ name: 'AdminExchanges' }"
+              :class="['w-full text-left px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-200 flex justify-between items-center', 
+                       ($route.matched[0] && $route.matched[0].name === 'AdminExchanges')
+                         ? 'bg-gradient-to-r from-purple-50 to-violet-50 text-purple-700 border-l-4 border-purple-500 shadow-sm' 
+                         : 'text-gray-700 hover:bg-gray-50 hover:translate-x-1']"
+            >
+                <span class="font-medium">Exchanges</span>
+                <span class="bg-purple-100 text-purple-800 text-xs font-semibold py-1 px-2.5 rounded-full min-w-[32px] text-center">
+                  {{ getRequestsByType('Exchange').length }}
+                </span>
+            </router-link>
+          </li>
+        </ul>
+      </nav>
       
       <!-- Navigation Section Only -->
       <div class="mt-auto pt-6 border-t border-gray-200">
@@ -135,13 +173,22 @@ export default {
       isLoading: true,
       error: null,
       dateFilter: 'all', // Default to showing all requests
-      requestType: 'all', // Default to showing all request types
     };
   },
   async created() {
     await this.fetchRequests();
   },
   computed: {
+    requestType() {
+      // Determine request type based on current route
+      if (this.$route.name === 'AdminReturns' || this.$route.matched.some(r => r && r.name === 'AdminReturns')) {
+        return 'Return';
+      } else if (this.$route.name === 'AdminExchanges' || this.$route.matched.some(r => r && r.name === 'AdminExchanges')) {
+        return 'Exchange';
+      }
+      return 'all'; // Default to all for AdminAll route and status routes under all
+    },
+    // Filter requests by date and type
     // Filter requests by date and type
     filteredRequestsByDate() {
       let filteredRequests = this.requests;
